@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no, viewport-fit=cover">
+        <title>Узнать нахождение базовых станций</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+        <script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/Leaflet.fullscreen.min.js'></script>
+        <link href='https://api.mapbox.com/mapbox.js/plugins/leaflet-fullscreen/v1.0.1/leaflet.fullscreen.css' rel='stylesheet' />
+        <style>
+            @media (max-width: 800px) #map {
+                height: 90vh;
+            }
+            #map {
+                height: calc(120vh - 320px);
+                position: relative;
+                outline: none;
+            }
+
+            @import url("https://fonts.googleapis.com/css?family=Play:400,700&subset=cyrillic");
+            @import url("https://fonts.googleapis.com/css?family=Roboto+Mono:400,700&subset=cyrillic");
+
+            * {
+                font-family: "Play", sans-serif;
+                box-sizing: border-box;
+                -moz-box-sizing: border-box;
+                -webkit-box-sizing: border-box;
+            }
+
+            body {
+                font-size: 18px;
+                color: #000;
+            }
+
+            article {
+                padding: 10px;
+            }
+
+            article > section {
+                max-width: 800px;
+
+                margin-left: 100px;
+                padding-left: 25px;
+
+                border-left: #fe0a3d 5px solid;
+            }
+
+            @media (max-width: 800px) {
+                article {
+                    padding: 0;
+                    margin: 0;
+                }
+                article > section {
+                    padding-left: 0;
+                    margin-left: 0;
+                }
+            }
+
+            article > section > pre {
+                margin: 0 auto 20px;
+                padding: 10px 15px;
+                border: rgba(255, 255, 255, 0.7) 1px solid;
+                border-bottom-width: 3px;
+                overflow-x: scroll;
+                font-family: "Roboto Mono", monospace;
+                font-size: 0.8em;
+                background: rgba(5, 14, 21, 0.8);
+            }
+
+            article > section > ul,
+            article > section > ol {
+                margin: 0 auto 20px;
+            }
+
+            .leaflet-control-attribution.leaflet-control {
+                display: none;
+            }
+
+            button, input[type="button"] {
+                border: 2px solid #c0c0c0;
+                border-radius: 5px;
+                background: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <center>
+            <h1>Узнать нахождение базовых станций</h1>
+        </center>
+        <article id="app">
+            <section class="form">
+                <form onsubmit="return false;">
+                    <p>MCC: <input type="text" inputmode="numeric" id="mcc" value="250" required="required" /></p>
+                    <p>MNC: <input type="text" inputmode="numeric" id="mnc" required="required" /></p>
+                    <p>LAC/TAC: <input type="text" inputmode="numeric" id="lac" required="required" /></p>
+                    <p>CID/SAC/ECI: <input type="text" inputmode="numeric" id="cid" required="required" /></p>
+                    <p><button onclick="get()">Узнать</button></p>
+                </form>
+            </section>
+            <section class="map">
+
+                <div id="map"></div>
+            </section>
+        </article>
+        <script type="text/javascript">
+
+            window.L = L
+
+            const bts_icon_red = L.icon({
+                iconUrl      : 'https://xinit.ru/bs/img/bs-red.png',
+                iconSize     : [39, 51],
+                iconAnchor   : [19, 50],
+                tooltipAnchor: [0, -50],
+                popupAnchor  : [0, -50]
+            });
+            var pt = new L.LatLng(55.04218262013, 73.29293853522);
+
+            function get() {
+                var mcc = document.getElementById("mcc").value;
+                var mnc = document.getElementById("mnc").value;
+                var lac = document.getElementById("lac").value;
+                var cid = document.getElementById("cid").value;
+                fetch(`https://api.mylnikov.org/geolocation/cell?v=1.1&data=open&mcc=${mcc}&mnc=${mnc}&lac=${lac}&cellid=${cid}`)
+                    .then((res) => res.json())
+                    .then((body) => {
+                        console.log(body);
+                        pt = new L.LatLng(body.data.lat, body.data.lon);
+                        L.marker(pt, {bts_icon_red}).addTo(map).bindPopup(`${body.data.lat}, ${body.data.lon}`).openPopup();
+                        console.log(`Ссылка на карту: https://www.google.com/maps/search/${body.data.lat},${body.data.lon}`);
+
+                        const c = L.circle(pt, {radius: Math.floor(350)});
+                        c.addTo(map)
+
+                    });
+            }
+            var osm = new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 18
+            });
+
+            var googleStreets = new L.TileLayer("http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", {
+                maxZoom: 18,
+                subdomains:['mt0','mt1','mt2','mt3']
+            })
+
+            var googleHybrids = new L.TileLayer("http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}", {
+                maxZoom: 18,
+                subdomains:['mt0','mt1','mt2','mt3']
+            })
+
+            var baseMaps = {
+                "OpenStreetMap": osm,
+                "Streets": googleStreets,
+                "Hybrids": googleHybrids
+            };
+
+            var map = new L.Map("map", {
+                fullscreenControl: true,
+                center: pt,
+                zoom: 12,
+                layers: [osm, googleHybrids, googleStreets],
+            });
+            L.control.layers(baseMaps).addTo(map);
+            
+        </script>
+    </body>
+</html>
