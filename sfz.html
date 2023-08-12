@@ -37,6 +37,18 @@
 					</div>
 				</div>
 			</div>
+            <br>
+            <div class="row">
+                <h2 align="center">15 digit <-> 18 digit number converter</h2>
+                <div class="mb-3">
+                    <br>
+                    <label for="sfz1" class="form-label">Enter shenfenzheng number</label>
+                    <input id="sfz1" maxlength="18" class="form-control" aria-describedby="">
+                </div>
+                <div class="mb-3 d-grid gap-2">
+                    <button onclick="handler1()" class="btn btn-primary">Convert</button>
+                </div>
+            </div>
 		</div>
 		<script type="text/javascript">
 function decode(sfzNum) {
@@ -6406,7 +6418,7 @@ function decode(sfzNum) {
             ee = 0;
         }
     }
-    var y = '', m = '', d = '', s = '', sex = 'Мужской';
+    var y = '', m = '', d = '', s = '', sex = 'Male';
     var bianhao = card.substr(0, 6);
     if (card.length == 15) {
         y = card.substr(6, 2);
@@ -6450,6 +6462,36 @@ function handler() {
 	else {
 		alert("Number must be 15 or 18 digits")
 	}
+}
+
+function handler1() {
+    var num = document.getElementById("sfz1").value
+    if(num.length == 15) {
+        document.getElementById("sfz1").value = oldToNew(num)
+    }
+    else if(num.length == 18) {
+        document.getElementById("sfz1").value = newToOld(num)
+    }
+    else {
+        alert("Number must be 15 or 18 digits")
+    }
+}
+
+function newToOld(sfzNum) {
+    return `${sfzNum.substr(0, 6)}${sfzNum.substr(8, 9)}`
+}
+
+function oldToNew(sfzNum) {
+    card = `${sfzNum.substr(0,6)}19${sfzNum.substr(6)}X`
+
+    var a = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+    var valide = [1, 0, 'X', 9, 8, 7, 6, 5, 4, 3, 2];
+    var s = 0;
+    for (var i = 0; i < card.length - 1; i++) {
+        s += card.charAt(i) * a[i];
+    }
+    var mod = s % 11;
+    return card.replace("X", "") + valide[mod]
 }
 		</script>
 	</body>
